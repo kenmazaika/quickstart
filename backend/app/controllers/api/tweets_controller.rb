@@ -1,4 +1,4 @@
-class Api::TweetsController < ApplicationController
+class Api::TweetsController < ActionController::API
   def index
     tweets = Tweet.all
     render json: tweets
