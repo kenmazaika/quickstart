@@ -43,3 +43,26 @@ curl -H "Content-Type: application/json" \
 ```
 curl --request DELETE "http://localhost:4857/api/tweets/1"
 ```
+
+
+### Setup
+
+The following command will build the docker image for this project.  Replace `kenmazaika` with your handle.
+
+**Build** the docker image, with:
+
+```
+docker build . -t kenmazaika/metropolis-quickstart-backend:latest
+```
+
+**Run** the docker image, with:
+
+```
+docker run -p 8081:8081 kenmazaika/metropolis-quickstart-backend:latest
+```
+
+**Shell** into the docker image, with:
+
+```
+docker run -ti kenmazaika/metropolis-quickstart-backend /bin/bash
+```

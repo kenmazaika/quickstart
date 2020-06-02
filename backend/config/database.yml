@@ -4,5 +4,5 @@ development:
   database: metropolis_quickstart_development
   pool: 5
   port: 5431
-  host: localhost
+  host: docker.for.mac.host.internal
   username: postgres
