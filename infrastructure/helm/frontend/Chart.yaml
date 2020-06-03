@@ -1,0 +1,4 @@
+apiVersion: v1
+description: React frontend for metropolis quickstart
+name: metropolis-quickstart-frontend
+version: 1.0.0
