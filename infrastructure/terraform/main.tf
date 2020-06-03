@@ -24,25 +24,6 @@ variable "gcr_email" {}
 # Modules
 ###############################################################################
 
-# module "cluster" {
-#   source = "../../modules/cluster"
-
-#   region            = var.region
-#   cluster_name      = var.cluster_name
-#   credentials_file  = var.credentials_file
-
-#   private_vpc_connection = module.vpc.private_vpc_connection
-#   private_network        = module.vpc.private_network
-# }
-
-# module "redis" {
-#   source = "../../modules/redis"
-
-#   private_network        = module.vpc.private_network
-#   private_vpc_connection = module.vpc.private_vpc_connection
-#   instance_name_prefix   = "prod"
-# }
-
 # module "deployment" {
 #   source = "../../modules/deployment"
 #   name                   = "Production"
