@@ -21,23 +21,6 @@ variable "sql_user_password" {}
 variable "gcr_email" {}
 
 ###############################################################################
-# Modules
-###############################################################################
-
-# module "deployment" {
-#   source = "../../modules/deployment"
-#   name                   = "Production"
-#   environment            = "production"
-  
-#   database_private_ip    = module.cloud-sql.host
-#   database_name          = module.cloud-sql.database_name
-#   cluster_name           = var.cluster_name
-#   database_instance_name = "${var.project}:${var.region}:${module.cloud-sql.database_name}"
-#   ingress_ip_address     = data.kubernetes_service.nginx_ingress_controller.load_balancer_ingress.0.ip
-#   redis_host             = module.redis.host
-# }
-
-###############################################################################
 # Providers
 ###############################################################################
 
@@ -75,7 +58,7 @@ provider "metropolis" {
   host        = "http://hellometropolis.com"
 
   public_key  = var.metropolis_public_key
-  private_key = var.metropolis_public_key
+  private_key = var.metropolis_private_key
 }
 
 
