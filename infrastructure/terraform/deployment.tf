@@ -3,6 +3,73 @@ resource "metropolis_workspace" "primary" {
   note = "Workspace for the metropolis quickstart application"
 }
 
+resource "metropolis_component" "clone_source" {
+  name              = "clone-source"
+  container_name    = "gcr.io/cloud-builders/gcloud"
+  placeholders      = [ "METROPOLIS_REF" ]
+  workspace_id      = metropolis_workspace.primary.id
+
+  component_did_mount = [
+    "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/github/clone.sh | DEPLOY_KEY=\"`gcloud secrets versions access latest --secret=github_deploy_key`\" GITHUB_URL=\"git@github.com:kenmazaika/metropolis.git\" REF=\"$_METROPOLIS_PLACEHOLDER.METROPOLIS_REF\" sh",
+    ". /metropolis-utils/.clone",
+    "ls"
+  ]
+  
+}
+
+resource "metropolis_component" "docker_build_frontend" {
+  name              = "docker-build-frontend"
+  container_name    = "gcr.io/kaniko-project/executor:v0.18.0"
+  placeholders      = [ "DOCKER_TAG" ]
+  workspace_id      = metropolis_workspace.primary.id
+  
+  arguments = [
+    "--dockerfile=frontend/Dockerfile",
+    "--context=dir://frontend",
+    "--destination=${var.docker_repo_frontend}:$_METROPOLIS_PLACEHOLDER.DOCKER_TAG",
+    "--cache=true",
+    "--cache-ttl=24h"
+  ]
+
+  skip = [ "destroy" ]
+}
+resource "metropolis_component" "docker_build_backend" {
+  name              = "docker-build-backend"
+  container_name    = "gcr.io/kaniko-project/executor:v0.18.0"
+  placeholders      = [ "DOCKER_TAG" ]
+  workspace_id      = metropolis_workspace.primary.id
+  
+  arguments = [
+    "--dockerfile=backend/Dockerfile",
+    "--context=dir://backend",
+    "--destination=${var.docker_repo_backend}:$_METROPOLIS_PLACEHOLDER.DOCKER_TAG",
+    "--cache=true",
+    "--cache-ttl=24h"
+  ]
+
+  skip = [ "destroy" ]
+}
+
+resource "metropolis_composition" "primary" {
+  name              = "Sandbox"
+  workspace_id      = metropolis_workspace.primary.id
+
+  component {
+    id = metropolis_component.clone_source.id
+  }
+
+  component {
+    id = metropolis_component.docker_build_frontend.id
+  }
+
+  component {
+    id = metropolis_component.docker_build_backend.id
+  }
+
+}
+
+
+
 # resource "metropolis_asset" "metropolis_asset_database_name" {
 #   name  = "DATABASE_NAME"
 #   value = var.database_name
