@@ -18,21 +18,11 @@ variable "metropolis_private_key" {}
 variable "zone" {}
 variable "region" {}
 variable "sql_user_password" {}
+variable "gcr_email" {}
 
 ###############################################################################
 # Modules
 ###############################################################################
-# module "cloud-sql" {
-#   source = "../../modules/cloud-sql"
-
-#   region               = var.region
-#   zone                 = var.zone
-#   sql_user_password    = module.secrets.database_password
-#   database_name_prefix = "production"
-  
-#   private_network         = module.vpc.private_network.self_link
-#   private_vpc_connection  = module.vpc.private_vpc_connection
-# }
 
 # module "cluster" {
 #   source = "../../modules/cluster"
@@ -92,12 +82,12 @@ provider "google-beta" {
   credentials = file(var.credentials_file)
 }
 
-# provider "kubernetes" {
-#   load_config_file       = false
-#   host                   = "https://${module.cluster.container_cluster.endpoint}"
-#   cluster_ca_certificate = base64decode(module.cluster.container_cluster.master_auth.0.cluster_ca_certificate)
-#   token                  = data.google_client_config.default.access_token
-# }
+provider "kubernetes" {
+  load_config_file       = false
+  host                   = "https://${google_container_cluster.primary.endpoint}"
+  cluster_ca_certificate = base64decode(google_container_cluster.primary.master_auth.0.cluster_ca_certificate)
+  token                  = data.google_client_config.default.access_token
+}
 
 # provider "helm" {
 #   kubernetes {
