@@ -1,8 +1,41 @@
+###############################################################################
+# Metropolis Workspace
+###############################################################################
+
 resource "metropolis_workspace" "primary" {
   name = "Metropolis Quickstart"
   note = "Workspace for the metropolis quickstart application"
 }
 
+###############################################################################
+# Metropolis Assets
+###############################################################################
+
+resource "metropolis_asset" "metropolis_asset_database_name" {
+  name  = "DATABASE_NAME"
+  value = google_sql_database_instance.master.name
+
+  workspace_id = metropolis_workspace.primary.id
+}
+
+resource "metropolis_asset" "metropolis_asset_database_instance_name" {
+  name  = "DATABASE_INSTANCE_NAME"
+  value = "${var.project}:${var.region}:${google_sql_database_instance.master.name}"
+
+  workspace_id = metropolis_workspace.primary.id
+}
+
+resource "metropolis_asset" "metropolis_asset_database_private_ip" {
+  name  = "DATABASE_PRIVATE_IP"
+  value = google_sql_database_instance.master.ip_address[index(google_sql_database_instance.master.ip_address.*.type, "PRIVATE")].ip_address
+
+  workspace_id = metropolis_workspace.primary.id
+}
+
+
+###############################################################################
+# Metropolis Component
+###############################################################################
 resource "metropolis_component" "clone_source" {
   name              = "clone-source"
   container_name    = "gcr.io/cloud-builders/gcloud"
@@ -10,13 +43,12 @@ resource "metropolis_component" "clone_source" {
   workspace_id      = metropolis_workspace.primary.id
 
   component_did_mount = [
-    "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/github/clone.sh | DEPLOY_KEY=\"`gcloud secrets versions access latest --secret=github_deploy_key`\" GITHUB_URL=\"git@github.com:kenmazaika/metropolis.git\" REF=\"$_METROPOLIS_PLACEHOLDER.METROPOLIS_REF\" sh",
+    "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/github/clone.sh | DEPLOY_KEY=\"`gcloud secrets versions access latest --secret=github_deploy_key`\" GITHUB_URL=\"${var.github_clone_url}\" REF=\"$_METROPOLIS_PLACEHOLDER.METROPOLIS_REF\" sh",
     ". /metropolis-utils/.clone",
     "ls"
   ]
   
 }
-
 resource "metropolis_component" "docker_build_frontend" {
   name              = "docker-build-frontend"
   container_name    = "gcr.io/kaniko-project/executor:v0.18.0"
@@ -50,6 +82,43 @@ resource "metropolis_component" "docker_build_backend" {
   skip = [ "destroy" ]
 }
 
+
+resource "metropolis_component" "helm_releases" {
+  name              = "helm-deployments"
+  container_name    = "gcr.io/cloud-builders/gcloud"
+  placeholders      = [ "SANDBOX_ID", "DOCKER_TAG" ]
+  workspace_id      = metropolis_workspace.primary.id
+
+  component_did_mount = [
+    "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/helm/install.sh | sh",
+    ". /metropolis-utils/.metropolis-utils"
+  ]
+
+  on_create = [
+    "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
+    "helm install frontend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/frontend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG", 
+    "helm install backend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/backend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG --set env.RAILS_ENV=production --set env.AFTER_CONTAINER_DID_MOUNT=\"sh lib/docker/mount.sh\" --set env.SANDBOX_ID=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID"
+  ]
+
+  on_update = [
+    "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
+    "helm upgrade frontend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/frontend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG", 
+    "helm upgrade backend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/backend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG --set env.RAILS_ENV=production --set env.AFTER_CONTAINER_DID_MOUNT=\"sh lib/docker/mount.sh\" --set env.SANDBOX_ID=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID"
+  ]
+
+  on_destroy = [
+    "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
+    "helm delete frontend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID", 
+    "helm delete backend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID"
+  ]
+
+}
+
+
+###############################################################################
+# Metropolis Composition
+###############################################################################
+
 resource "metropolis_composition" "primary" {
   name              = "Sandbox"
   workspace_id      = metropolis_workspace.primary.id
@@ -66,31 +135,20 @@ resource "metropolis_composition" "primary" {
     id = metropolis_component.docker_build_backend.id
   }
 
+  component {
+    id = metropolis_component.helm_releases.id
+  }
+
 }
 
 
 
-# resource "metropolis_asset" "metropolis_asset_database_name" {
-#   name  = "DATABASE_NAME"
-#   value = var.database_name
-
-#   workspace_id = metropolis_workspace.primary.id
-# }
-
-# resource "metropolis_asset" "metropolis_asset_database_instance_name" {
-#   name  = "DATABASE_INSTANCE_NAME"
-#   value = var.database_instance_name
-
-#   workspace_id = metropolis_workspace.primary.id
-# }
 
 
-# resource "metropolis_asset" "metropolis_asset_database_private_ip" {
-#   name  = "DATABASE_PRIVATE_IP"
-#   value = var.database_private_ip
 
-#   workspace_id = metropolis_workspace.primary.id
-# }
+
+
+
 
 # resource "metropolis_asset" "metropolis_asset_ingress_ip" {
 #   name  = "INGRESS_IP_ADDRESS"
@@ -99,39 +157,7 @@ resource "metropolis_composition" "primary" {
 #   workspace_id = metropolis_workspace.primary.id
 # }
 
-# resource "metropolis_component" "docker_build_frontend" {
-#   name              = "docker-build-frontend"
-#   container_name    = "gcr.io/kaniko-project/executor:v0.18.0"
-#   placeholders      = [ "DOCKER_TAG" ]
-#   workspace_id      = metropolis_workspace.primary.id
-  
-#   arguments = [
-#     "--dockerfile=frontend/Dockerfile",
-#     "--context=dir://frontend",
-#     "--destination=gcr.io/hello-metropolis/metropolis/frontend:$_METROPOLIS_PLACEHOLDER.DOCKER_TAG",
-#     "--cache=true",
-#     "--cache-ttl=24h"
-#   ]
 
-#   skip = [ "destroy" ]
-# }
-
-# resource "metropolis_component" "docker_build_backend" {
-#   name              = "docker-build-backend"
-#   container_name    = "gcr.io/kaniko-project/executor:v0.18.0"
-#   placeholders      = [ "DOCKER_TAG" ]
-#   workspace_id      = metropolis_workspace.primary.id
-
-#   arguments = [
-#     "--dockerfile=backend/Dockerfile",
-#     "--context=dir://backend",
-#     "--destination=gcr.io/hello-metropolis/metropolis/backend:$_METROPOLIS_PLACEHOLDER.DOCKER_TAG",
-#     "--cache=true",
-#     "--cache-ttl=24h"
-#   ]
-
-#   skip = [ "destroy" ]
-# }
 
 # resource "metropolis_component" "helm_releases" {
 #   name              = "helm-deployments"
@@ -201,20 +227,6 @@ resource "metropolis_composition" "primary" {
 # }
 
 
-# resource "metropolis_component" "clone_source" {
-#   name              = "clone-source"
-#   container_name    = "gcr.io/cloud-builders/gcloud"
-#   placeholders      = [ "METROPOLIS_REF" ]
-#   workspace_id      = metropolis_workspace.primary.id
-
-#   component_did_mount = [
-#     "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/github/clone.sh | DEPLOY_KEY=\"`gcloud secrets versions access latest --secret=github_deploy_key`\" GITHUB_URL=\"git@github.com:kenmazaika/metropolis.git\" REF=\"$_METROPOLIS_PLACEHOLDER.METROPOLIS_REF\" sh",
-#     ". /metropolis-utils/.clone",
-#     "ls"
-#   ]
-  
-# }
-
 # resource "metropolis_component" "mount_secrets" {
 #   name              = "mount-secrets"
 #   container_name    = "gcr.io/cloud-builders/gcloud"
@@ -231,8 +243,6 @@ resource "metropolis_composition" "primary" {
 #   skip = [ "update", "destroy" ]
 
 # }
-
-
 
 # resource "metropolis_component" "dns" {
 #   name              = "setup-dns-records"

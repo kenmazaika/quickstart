@@ -21,6 +21,7 @@ variable "sql_user_password" {}
 variable "gcr_email" {}
 variable "docker_repo_frontend" {}
 variable "docker_repo_backend" {}
+variable "github_clone_url" {}
 
 ###############################################################################
 # Providers
