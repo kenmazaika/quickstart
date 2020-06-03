@@ -23,3 +23,10 @@ docker run -p 8082:80 kenmazaika/metropolis-quickstart-frontend:latest
 docker run -ti kenmazaika/metropolis-quickstart-frontend /bin/sh
 cd /usr/share/nginx/html
 ```
+
+**Push** to GCR.io, with:
+
+```
+docker tag kenmazaika/metropolis-quickstart-frontend:latest gcr.io/hello-metropolis/metropolis-quickstart/frontend:latest
+docker push gcr.io/hello-metropolis/metropolis-quickstart/frontend:latest
+```

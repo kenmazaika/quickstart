@@ -37,14 +37,6 @@ variable "gcr_email" {}
 #   redis_host             = module.redis.host
 # }
 
-# module "secrets" {
-#   source = "../../modules/secrets"
-
-#   database_host = module.cloud-sql.host
-#   database_name = module.cloud-sql.database_name
-#   environment   = "production"
-# }
-
 ###############################################################################
 # Providers
 ###############################################################################
