@@ -17,7 +17,7 @@ variable "metropolis_public_key" {}
 variable "metropolis_private_key" {}
 variable "zone" {}
 variable "region" {}
-
+variable "sql_user_password" {}
 
 ###############################################################################
 # Modules
@@ -33,14 +33,6 @@ variable "region" {}
 #   private_network         = module.vpc.private_network.self_link
 #   private_vpc_connection  = module.vpc.private_vpc_connection
 # }
-
-
-# module "vpc" {
-#   source = "../../modules/vpc"
-
-#   network_name = "private-network"
-# }
-
 
 # module "cluster" {
 #   source = "../../modules/cluster"

@@ -14,8 +14,6 @@ resource "google_compute_global_address" "private_ip" {
   network       = google_compute_network.private.self_link
 }
 
-
-
 resource "google_service_networking_connection" "private_vpc_connection" {
   provider = google-beta
 
