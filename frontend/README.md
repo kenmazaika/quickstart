@@ -1,5 +1,5 @@
 # Metropolis
-## Quickstart Backend
+## Quickstart Frontend
 
 ### Setup
 
@@ -29,4 +29,11 @@ cd /usr/share/nginx/html
 ```
 docker tag kenmazaika/metropolis-quickstart-frontend:latest gcr.io/hello-metropolis/metropolis-quickstart/frontend:latest
 docker push gcr.io/hello-metropolis/metropolis-quickstart/frontend:latest
+```
+
+
+**Install Helm Chart** to Kubernetes, with:
+
+```
+helm install metropolis-quickstart-frontend infrastructure/helm/frontend/
 ```
