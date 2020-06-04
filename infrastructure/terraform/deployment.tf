@@ -137,6 +137,25 @@ resource "metropolis_component" "mount_secrets" {
 
 }
 
+resource "metropolis_component" "rake_database" {
+  name              = "rake-database"
+  container_name    = "${var.docker_repo_backend}:terraform"
+  placeholders      = [ "SANDBOX_ID" ]
+  workspace_id      = metropolis_workspace.primary.id
+
+  component_did_mount = [
+    "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/cloud_sql_proxy/install.sh | sh",
+    ". /metropolis-utils/.metropolis-utils && PROXY_INSTANCE_NAME=\"$_METROPOLIS_ASSET.DATABASE_INSTANCE_NAME\" SANDBOX_ID=\"$_METROPOLIS_PLACEHOLDER.SANDBOX_ID\" sh backend/lib/docker/setup-cloudproxy-and-mount.sh"
+  ]
+
+  on_create = [
+    "cd backend && RAILS_ENV=production rake quickstart:seed"
+  ]
+
+  skip = [ "update", "destroy" ]
+
+}
+
 ###############################################################################
 # Metropolis Composition
 ###############################################################################
@@ -170,25 +189,7 @@ resource "metropolis_composition" "primary" {
 
 
 
-# resource "metropolis_component" "rake_database" {
-#   name              = "rake-database"
-#   container_name    = "gcr.io/hello-metropolis/metropolis/backend:latest"
-#   placeholders      = [ "SANDBOX_ID" ]
-#   workspace_id      = metropolis_workspace.primary.id
-#   count             = var.seed_database ? "1" : "0"
 
-#   component_did_mount = [
-#     "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/cloud_sql_proxy/install.sh | sh",
-#     ". /metropolis-utils/.metropolis-utils && PROXY_INSTANCE_NAME=\"$_METROPOLIS_ASSET.DATABASE_INSTANCE_NAME\" SANDBOX_ID=\"$_METROPOLIS_PLACEHOLDER.SANDBOX_ID\" sh backend/lib/docker/setup-cloudproxy-and-mount-${var.environment}.sh"
-#   ]
-
-#   on_create = [
-#     "cd backend && RAILS_ENV=${var.environment} rake metropolis:seed"
-#   ]
-
-#   skip = [ "update", "destroy" ]
-
-# }
 
 # resource "metropolis_component" "expose_services" {
 #   name              = "kubernetes-ingress"
