@@ -156,6 +156,53 @@ resource "metropolis_component" "rake_database" {
 
 }
 
+resource "metropolis_component" "expose_services" {
+  name              = "kubernetes-ingress"
+  container_name    = "gcr.io/cloud-builders/gcloud"
+  placeholders      = [ "SANDBOX_ID", "CUSTOM_DOMAIN" ]
+  workspace_id      = metropolis_workspace.primary.id
+
+  on_create = [
+    "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
+    "DEPLOYMENT_KEY=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID INGRESS_HOST=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN sh ./infrastructure/shell/install-ingress.sh"
+  ]
+
+  skip = [ "update", "destroy" ]  
+
+}
+
+resource "metropolis_component" "dns" {
+  name              = "setup-dns-records"
+  container_name    = "gcr.io/cloud-builders/gcloud"
+  workspace_id      = metropolis_workspace.primary.id
+
+  placeholders = ["SANDBOX_ID", "CUSTOM_DOMAIN"]
+
+  component_did_mount = [
+    "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/terraform/install.sh | sh",
+    ". /metropolis-utils/.metropolis-utils"
+  ]
+
+  on_create = [
+    "cd ./infrastructure/shell/dns-records", 
+    "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
+    "terraform init", 
+    "terraform apply -var 'domain=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve",
+    "echo 'METRO_INFO: {\"url\": \"$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN\"}'"
+  ]
+
+  on_destroy = [
+    "cd ./infrastructure/metropolis/dns-records", 
+    "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
+    "terraform init", 
+    "terraform destroy -var 'domain=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve"
+  ]
+
+  skip = [ "update" ]
+}
+
+
+
 ###############################################################################
 # Metropolis Composition
 ###############################################################################
@@ -188,6 +235,14 @@ resource "metropolis_composition" "primary" {
     id = metropolis_component.rake_database.id
   }
 
+  component {
+    id = metropolis_component.expose_services.id
+  }
+
+  component {
+    id = metropolis_component.dns.id
+  }
+
 }
 
 
@@ -195,53 +250,11 @@ resource "metropolis_composition" "primary" {
 
 
 
-# resource "metropolis_component" "expose_services" {
-#   name              = "kubernetes-ingress"
-#   container_name    = "gcr.io/cloud-builders/gcloud"
-#   placeholders      = [ "SANDBOX_ID", "CUSTOM_DOMAIN" ]
-#   workspace_id      = metropolis_workspace.primary.id
-
-#   on_create = [
-#     "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
-#     "DEPLOYMENT_KEY=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID INGRESS_HOST=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN sh ./infrastructure/shell/install-${var.environment}-ingress.sh"
-#   ]
-
-#   skip = [ "update", "destroy" ]  
-
-# }
 
 
 
 
-# resource "metropolis_component" "dns" {
-#   name              = "setup-dns-records"
-#   container_name    = "gcr.io/cloud-builders/gcloud"
-#   workspace_id      = metropolis_workspace.primary.id
 
-#   placeholders = ["SANDBOX_ID", "CUSTOM_DOMAIN"]
-
-#   component_did_mount = [
-#     "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/terraform/install.sh | sh",
-#     ". /metropolis-utils/.metropolis-utils"
-#   ]
-
-#   on_create = [
-#     "cd ./infrastructure/metropolis/${var.environment}/dns-records", 
-#     "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
-#     "terraform init", 
-#     "terraform apply -var 'domain=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve",
-#     "echo 'METRO_INFO: {\"url\": \"$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN\"}'"
-#   ]
-
-#   on_destroy = [
-#     "cd ./infrastructure/metropolis/${var.environment}/dns-records", 
-#     "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
-#     "terraform init", 
-#     "terraform destroy -var 'domain=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve"
-#   ]
-
-#   skip = [ "update" ]
-# }
 
 
 

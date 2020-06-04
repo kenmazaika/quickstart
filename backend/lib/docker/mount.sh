@@ -17,5 +17,4 @@ echo "production:
 
 echo "`cat /kubernetes-secrets/metropolis-quickstart-rails-master-key/value`" > "$DIR/master.key"
 
-cat "$DIR/database.yml"
 echo "> Production mounted"
