@@ -22,6 +22,7 @@ variable "gcr_email" {}
 variable "docker_repo_frontend" {}
 variable "docker_repo_backend" {}
 variable "github_clone_url" {}
+variable "domain_name" {}
 
 ###############################################################################
 # Providers

@@ -159,12 +159,12 @@ resource "metropolis_component" "rake_database" {
 resource "metropolis_component" "expose_services" {
   name              = "kubernetes-ingress"
   container_name    = "gcr.io/cloud-builders/gcloud"
-  placeholders      = [ "SANDBOX_ID", "CUSTOM_DOMAIN" ]
+  placeholders      = [ "SANDBOX_ID" ]
   workspace_id      = metropolis_workspace.primary.id
 
   on_create = [
     "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
-    "DEPLOYMENT_KEY=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID INGRESS_HOST=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN sh ./infrastructure/shell/install-ingress.sh"
+    "DEPLOYMENT_KEY=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID INGRESS_HOST=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID.${var.domain_name} sh ./infrastructure/shell/install-ingress.sh"
   ]
 
   skip = [ "update", "destroy" ]  
@@ -176,7 +176,7 @@ resource "metropolis_component" "dns" {
   container_name    = "gcr.io/cloud-builders/gcloud"
   workspace_id      = metropolis_workspace.primary.id
 
-  placeholders = ["SANDBOX_ID", "CUSTOM_DOMAIN"]
+  placeholders = ["SANDBOX_ID" ]
 
   component_did_mount = [
     "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/terraform/install.sh | sh",
@@ -187,15 +187,15 @@ resource "metropolis_component" "dns" {
     "cd ./infrastructure/shell/dns-records", 
     "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
     "terraform init", 
-    "terraform apply -var 'domain=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve",
-    "echo 'METRO_INFO: {\"url\": \"$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN\"}'"
+    "terraform apply -var 'domain=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID.${var.domain_name}' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve",
+    "echo 'METRO_INFO: {\"url\": \"$_METROPOLIS_PLACEHOLDER.SANDBOX_ID. ${var.domain_name}\"}'"
   ]
 
   on_destroy = [
-    "cd ./infrastructure/metropolis/dns-records", 
+    "cd ./infrastructure/shell/dns-records", 
     "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
     "terraform init", 
-    "terraform destroy -var 'domain=$_METROPOLIS_PLACEHOLDER.CUSTOM_DOMAIN' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve"
+    "terraform destroy -var 'domain=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID.${var.domain_name}' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve"
   ]
 
   skip = [ "update" ]
@@ -245,62 +245,45 @@ resource "metropolis_composition" "primary" {
 
 }
 
+###############################################################################
+# Metropolis Deployment
+###############################################################################
 
+resource "metropolis_deployment" "master" {
+  name           = "master"
+  composition_id = metropolis_composition.primary.id
+  state          = "build"
 
+  placeholder {
+    name  = "DOCKER_TAG"
+    value = "latest"
+  }
 
+  placeholder {
+    name  = "SANDBOX_ID"
+    value = "master"
+  }
 
+  placeholder {
+    name  = "METROPOLIS_BRANCH"
+    value = "master"
+  }
 
+  placeholder {
+    name  = "METROPOLIS_REF"
+    value = "master"
+  }
 
+  placeholder {
+    name  = "METROPOLIS_REPO"
+    value = "kenmazaika/metropolis"
+  }
 
+  event_link {
+    repo           = "kenmazaika/metropolis"
+    event_name     = "pull_request"
+    branch         = "master"
+    trigger_action = "upgrade"
+  }
 
-
-
-
-
-
-
-
-
-# resource "metropolis_deployment" "master" {
-#   name           = "master"
-#   composition_id = metropolis_composition.primary.id
-#   state          = "build"
-
-#   placeholder {
-#     name  = "DOCKER_TAG"
-#     value = "latest"
-#   }
-
-#   placeholder {
-#     name  = "SANDBOX_ID"
-#     value = var.environment
-#   }
-
-#   placeholder {
-#     name  = "METROPOLIS_BRANCH"
-#     value = "master"
-#   }
-
-#   placeholder {
-#     name  = "METROPOLIS_REF"
-#     value = "master"
-#   }
-
-#   placeholder {
-#     name  = "METROPOLIS_REPO"
-#     value = "kenmazaika/metropolis"
-#   }
-
-#   placeholder {
-#     name  = "CUSTOM_DOMAIN"
-#     value = "hellometropolis.com"
-#   }
-
-#   event_link {
-#     repo           = "kenmazaika/metropolis"
-#     event_name     = "pull_request"
-#     branch         = "master"
-#     trigger_action = "upgrade"
-#   }
-
-# }
+}
