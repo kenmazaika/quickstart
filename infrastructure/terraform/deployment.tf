@@ -120,6 +120,22 @@ resource "metropolis_component" "helm_releases" {
 
 }
 
+resource "metropolis_component" "mount_secrets" {
+  name              = "mount-secrets"
+  container_name    = "gcr.io/cloud-builders/gcloud"
+  workspace_id      = metropolis_workspace.primary.id
+
+  component_did_mount = [
+    "echo 'Mounting secrets to /workspace/.metropolis-secrets'", 
+    "mkdir -p /workspace/.metropolis-secrets/metropolis-quickstart-rails-master-key", 
+    "echo `gcloud secrets versions access latest --secret metropolis-quickstart-rails-master-key` > /workspace/.metropolis-secrets/metropolis-quickstart-rails-master-key/value", 
+    "mkdir -p /workspace/.metropolis-secrets/metropolis-quickstart-database-credentials", 
+    "echo `gcloud secrets versions access latest --secret metropolis-quickstart-database-password` > /workspace/.metropolis-secrets/metropolis-quickstart-database-credentials/password"
+  ]
+
+  skip = [ "update", "destroy" ]
+
+}
 
 ###############################################################################
 # Metropolis Composition
@@ -143,6 +159,10 @@ resource "metropolis_composition" "primary" {
 
   component {
     id = metropolis_component.helm_releases.id
+  }
+
+  component {
+    id = metropolis_component.mount_secrets.id
   }
 
 }
@@ -186,22 +206,7 @@ resource "metropolis_composition" "primary" {
 # }
 
 
-# resource "metropolis_component" "mount_secrets" {
-#   name              = "mount-secrets"
-#   container_name    = "gcr.io/cloud-builders/gcloud"
-#   workspace_id      = metropolis_workspace.primary.id
 
-#   component_did_mount = [
-#     "echo 'Mounting secrets to /workspace/.metropolis-secrets'", 
-#     "mkdir -p /workspace/.metropolis-secrets/metropolis-rails-master-key", 
-#     "echo `gcloud secrets versions access latest --secret metropolis-rails-master-key` > /workspace/.metropolis-secrets/metropolis-rails-master-key/value", 
-#     "mkdir -p /workspace/.metropolis-secrets/metropolis-database-credentials", 
-#     "echo `gcloud secrets versions access latest --secret metropolis-database-password-${var.environment}` > /workspace/.metropolis-secrets/metropolis-database-credentials/password"
-#   ]
-
-#   skip = [ "update", "destroy" ]
-
-# }
 
 # resource "metropolis_component" "dns" {
 #   name              = "setup-dns-records"
