@@ -139,7 +139,7 @@ resource "metropolis_component" "mount_secrets" {
 
 resource "metropolis_component" "rake_database" {
   name              = "rake-database"
-  container_name    = "${var.docker_repo_backend}:terraform"
+  container_name    = "${var.docker_repo_backend}:stg-xyi"
   placeholders      = [ "SANDBOX_ID" ]
   workspace_id      = metropolis_workspace.primary.id
 
@@ -182,6 +182,10 @@ resource "metropolis_composition" "primary" {
 
   component {
     id = metropolis_component.mount_secrets.id
+  }
+
+  component {
+    id = metropolis_component.rake_database.id
   }
 
 }
