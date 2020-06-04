@@ -66,3 +66,17 @@ docker run -p 8081:8081 kenmazaika/metropolis-quickstart-backend:latest
 ```
 docker run -ti kenmazaika/metropolis-quickstart-backend /bin/bash
 ```
+
+**Push** to GCR.io, with:
+
+```
+docker tag kenmazaika/metropolis-quickstart-backend:latest gcr.io/hello-metropolis/metropolis-quickstart/backend:latest
+docker push gcr.io/hello-metropolis/metropolis-quickstart/backend:latest
+```
+
+
+**Install Helm Chart** to Kubernetes, with:
+
+```
+helm install metropolis-quickstart-backend infrastructure/helm/backend/
+```

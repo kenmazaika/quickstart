@@ -1,0 +1,36 @@
+replicaCount: 1
+
+image:
+  repository: gcr.io/hello-metropolis/metropolis-quickstart/backend
+  tag: latest
+  pullPolicy: Always
+
+env:
+  RAILS_ENV: production
+  AFTER_CONTAINER_DID_MOUNT: "sh lib/docker/mount.sh"
+  SANDBOX_ID: production
+
+service:
+  type: LoadBalancer
+  targetPort: 8081
+  internalPort: 80
+
+volumes:
+  - name: kubernetes-secrets-metropolis-quickstart-database-credentials
+    secret:
+      secretName: metropolis-quickstart-database-credentials
+  - name: kubernetes-secrets-metropolis-quickstart-rails-master-key
+    secret:
+      secretName: metropolis-quickstart-rails-master-key
+
+volumeMounts:
+  - name: kubernetes-secrets-metropolis-quickstart-database-credentials
+    mountPath: "/kubernetes-secrets/metropolis-quickstart-database-credentials"
+    readOnly: true
+  - name: kubernetes-secrets-metropolis-quickstart-rails-master-key
+    mountPath: "/kubernetes-secrets/metropolis-quickstart-rails-master-key"
+    readOnly: true
+
+imagePullSecrets:
+  - name: gcr-docker-configuration
+

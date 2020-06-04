@@ -60,7 +60,8 @@ RUN yarn install --check-files
 # Copy application
 ADD . ./
 
-RUN RAILS_ENV=production bundle exec rake assets:precompile
+# https://github.com/rails/rails/issues/32947
+RUN SECRET_KEY_BASE=1 RAILS_ENV=production bundle exec rake assets:precompile
 
 EXPOSE 8081
 

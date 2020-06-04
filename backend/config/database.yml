@@ -5,4 +5,5 @@ development:
   pool: 5
   port: 5431
   host: docker.for.mac.host.internal
+  # host: localhost
   username: postgres

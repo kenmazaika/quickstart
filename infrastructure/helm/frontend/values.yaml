@@ -1,0 +1,12 @@
+replicaCount: 1
+
+image:
+  repository: gcr.io/hello-metropolis/metropolis-quickstart/frontend
+  tag: latest
+  pullPolicy: Always
+
+service:
+  type: LoadBalancer
+  # exposePort: 30039
+  targetPort: 80
+  internalPort: 80
