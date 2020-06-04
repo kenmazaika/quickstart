@@ -8,7 +8,7 @@ DIR="`pwd`/config"
 echo "production:
   adapter: postgresql
   encoding: unicode
-  database: metro-backend-database
+  database: metro-backend-database-${SANDBOX_ID}
   pool: 5
   port: 5432
   host: ${DB_HOSTNAME}
