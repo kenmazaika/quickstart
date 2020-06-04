@@ -261,17 +261,6 @@ resource "metropolis_composition" "primary" {
 
 
 
-# locals {
-#   deployment_event_links = var.environment == "production" ? [] : [
-#     {
-#       repo           = "kenmazaika/metropolis"
-#       event_name     = "pull_request"
-#       branch         = "master"
-#       trigger_action = "upgrade"
-#     }
-#   ]
-# }
-
 # resource "metropolis_deployment" "master" {
 #   name           = "master"
 #   composition_id = metropolis_composition.primary.id
@@ -307,17 +296,11 @@ resource "metropolis_composition" "primary" {
 #     value = "hellometropolis.com"
 #   }
 
-
-#   dynamic "event_link" {
-#     for_each = local.deployment_event_links
-
-#     content {
-#       repo           = event_link.value.repo
-#       event_name     = event_link.value.event_name
-#       branch         = event_link.value.branch
-#       trigger_action = event_link.value.trigger_action
-#       spawn_sync     = event_link.value.spawn_sync
-#     }
+#   event_link {
+#     repo           = "kenmazaika/metropolis"
+#     event_name     = "pull_request"
+#     branch         = "master"
+#     trigger_action = "upgrade"
 #   }
 
 # }
