@@ -32,6 +32,12 @@ resource "metropolis_asset" "metropolis_asset_database_private_ip" {
   workspace_id = metropolis_workspace.primary.id
 }
 
+resource "metropolis_asset" "metropolis_asset_ingress_ip" {
+  name  = "INGRESS_IP_ADDRESS"
+  value = data.kubernetes_service.nginx_ingress_controller.load_balancer_ingress.0.ip
+
+  workspace_id = metropolis_workspace.primary.id
+}
 
 ###############################################################################
 # Metropolis Component
@@ -144,53 +150,6 @@ resource "metropolis_composition" "primary" {
 
 
 
-
-
-
-
-
-
-# resource "metropolis_asset" "metropolis_asset_ingress_ip" {
-#   name  = "INGRESS_IP_ADDRESS"
-#   value = var.ingress_ip_address
-
-#   workspace_id = metropolis_workspace.primary.id
-# }
-
-
-
-# resource "metropolis_component" "helm_releases" {
-#   name              = "helm-deployments"
-#   container_name    = "gcr.io/cloud-builders/gcloud"
-#   placeholders      = [ "SANDBOX_ID", "DOCKER_TAG", "REDIS_HOST" ]
-#   workspace_id      = metropolis_workspace.primary.id
-
-#   component_did_mount = [
-#     "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/helm/install.sh | sh",
-#     ". /metropolis-utils/.metropolis-utils"
-#   ]
-
-#   on_create = [
-#     "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
-#     "helm install frontend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/frontend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG", 
-#     "helm install backend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/backend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG --set env.RAILS_ENV=${var.environment} --set env.AFTER_CONTAINER_DID_MOUNT=\"sh lib/docker/mount-${var.environment}.sh\" --set env.SANDBOX_ID=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID --set env.REDIS_HOST=$_METROPOLIS_ASSET.REDIS_HOST"
-#   ]
-
-#   on_update = [
-#     "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
-#     "helm upgrade frontend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/frontend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG", 
-#     "helm upgrade backend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID infrastructure/helm/backend/ --set image.tag=$_METROPOLIS_PLACEHOLDER.DOCKER_TAG --set env.RAILS_ENV=${var.environment} --set env.AFTER_CONTAINER_DID_MOUNT=\"sh lib/docker/mount-${var.environment}.sh\" --set env.SANDBOX_ID=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID --set env.REDIS_HOST=$_METROPOLIS_ASSET.REDIS_HOST"
-#   ]
-
-#   on_destroy = [
-#     "gcloud container clusters get-credentials ${var.cluster_name} --zone=us-west1", 
-#     "helm delete frontend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID", 
-#     "helm delete backend-$_METROPOLIS_PLACEHOLDER.SANDBOX_ID"
-#   ]
-
-
-# }
-
 # resource "metropolis_component" "rake_database" {
 #   name              = "rake-database"
 #   container_name    = "gcr.io/hello-metropolis/metropolis/backend:latest"
@@ -274,65 +233,10 @@ resource "metropolis_composition" "primary" {
 #   skip = [ "update" ]
 # }
 
-# locals {
-#   metropolis_component_ids = concat(
-#       [
-#       metropolis_component.clone_source.id,
-#       metropolis_component.docker_build_frontend.id,
-#       metropolis_component.docker_build_backend.id,
-#       metropolis_component.helm_releases.id,
-#       metropolis_component.mount_secrets.id
-#     ], 
-#     (var.seed_database ? [metropolis_component.rake_database[0].id] : []),
-#     [
-#       metropolis_component.dns.id,
-#       metropolis_component.expose_services.id
-#     ]
-#   )
 
-#   composition_event_links = var.environment == "production" ? [] : [
-#     {
-#       repo           = "kenmazaika/metropolis"
-#       event_name     = "pull_request"
-#       branch         = "*"
-#       trigger_action = "build"
-#       spawn_sync     = true
-#     }
-#   ]
-# }
 
-# resource "metropolis_composition" "primary" {
-#   name              = "Sandbox"
-#   workspace_id      = metropolis_workspace.primary.id
 
-#   dynamic "component" {
-#     for_each = local.metropolis_component_ids
 
-#     content {
-#         id = component.value
-#     }
-#   }
-
-#   depends_on = [
-#     metropolis_asset.metropolis_asset_database_name,
-#     metropolis_asset.metropolis_asset_database_instance_name,
-#     metropolis_asset.metropolis_asset_database_private_ip,
-#     metropolis_asset.metropolis_asset_ingress_ip
-#   ]
-
-#   dynamic "event_link" {
-#     for_each = local.composition_event_links
-
-#     content {
-#       repo           = event_link.value.repo
-#       event_name     = event_link.value.event_name
-#       branch         = event_link.value.branch
-#       trigger_action = event_link.value.trigger_action
-#       spawn_sync     = event_link.value.spawn_sync
-#     }
-#   }
-
-# }
 
 # locals {
 #   deployment_event_links = var.environment == "production" ? [] : [

@@ -48,14 +48,14 @@ provider "kubernetes" {
   token                  = data.google_client_config.default.access_token
 }
 
-# provider "helm" {
-#   kubernetes {
-#   load_config_file       = false
-#   host                   = "https://${module.cluster.container_cluster.endpoint}"
-#   cluster_ca_certificate = base64decode(module.cluster.container_cluster.master_auth.0.cluster_ca_certificate)
-#   token                  = data.google_client_config.default.access_token
-#   }
-# }
+provider "helm" {
+  kubernetes {
+  load_config_file       = false
+  host                   = "https://${google_container_cluster.primary.endpoint}"
+  cluster_ca_certificate = base64decode(google_container_cluster.primary.master_auth.0.cluster_ca_certificate)
+  token                  = data.google_client_config.default.access_token
+  }
+}
 
 provider "metropolis" {
   host        = "http://hellometropolis.com"
@@ -81,23 +81,23 @@ data "terraform_remote_state" "terraform-state" {
 data "google_client_config" "default" {
 }
 
-# data "kubernetes_service" "nginx_ingress_controller" {
-#   metadata {
-#     name = "${helm_release.nginx_ingress.name}-controller"
-#   }
+data "kubernetes_service" "nginx_ingress_controller" {
+  metadata {
+    name = "${helm_release.nginx_ingress.name}-controller"
+  }
 
-#   # Wait to build the ingress before refreshing the
-#   # kubernetes service
-#   depends_on = [
-#     helm_release.nginx_ingress,
-#   ]
+  # Wait to build the ingress before refreshing the
+  # kubernetes service
+  depends_on = [
+    helm_release.nginx_ingress,
+  ]
 
-# }
+}
 
 # ###############################################################################
 # # Misc
 # ###############################################################################
-# resource "helm_release" "nginx_ingress" {
-#   name       = "nginx-ingress-production"
-#   chart      = "stable/nginx-ingress"
-# }
+resource "helm_release" "nginx_ingress" {
+  name       = "nginx-ingress"
+  chart      = "stable/nginx-ingress"
+}
