@@ -1,7 +1,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: post-upgrade-database-{{ include "helm-chart.fullname" . }}
+  name: post-upgrade-db-metro-quickstart
   labels:
     app.kubernetes.io/name: {{ include "helm-chart.name" . }}
     helm.sh/chart: {{ include "helm-chart.chart" . }}
