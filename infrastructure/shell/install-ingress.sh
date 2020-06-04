@@ -16,13 +16,13 @@ spec:
       paths:
       - path: /api
         backend:
-          serviceName: backend-$DEPLOYMENT_KEY-metropolis-backend
+          serviceName: backend-$DEPLOYMENT_KEY-metropolis-quickstart-backend
           servicePort: 80
   - host: $INGRESS_HOST
     http:
       paths:
       - backend: # default backend
-          serviceName: frontend-$DEPLOYMENT_KEY-metropolis-frontend
+          serviceName: frontend-$DEPLOYMENT_KEY-metropolis-quickstart-frontend
           servicePort: 80" > infrastructure/terraform/ingress.yaml
 
 
