@@ -24,11 +24,10 @@ jobs:
         echo "> Event Fired"
         HEADER=`echo -n '{"alg":"HS256","typ":"JWT"}' | openssl base64 -e -A | sed s/\+/-/ | sed -E s/=+$//`
         TIMESTAMP=`date +%s`
-        PUBLIC_KEY="e989ba8351e6"
-        SECRET="2b38e2e21598395cb845818a7dcafe46"
         PAYLOAD=`echo -n "{\"iat\":$TIMESTAMP,\"sub\":\"${METROPOLIS_PUBLIC_KEY}\"}" | openssl base64 -e -A| sed s/\+/-/ | sed -E s/=+$// `
         SIGNATURE=`echo -n "$HEADER.$PAYLOAD" | openssl dgst -sha256 -hmac $METROPOLIS_SECRET_KEY -binary | openssl base64 -e -A | sed s/\+/-/ | sed -E s/=+$// | sed 's/\//_/g'`
         BEARER_TOKEN="$HEADER.$PAYLOAD.$SIGNATURE"
+        echo $PAYLOAD
         
         if [ "${GITHUB_EVENT_NAME}" == "pull_request" ] && [ "${{ github.event.action }}" == "opened" ] 
         then 
