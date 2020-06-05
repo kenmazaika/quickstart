@@ -11,10 +11,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
 
-    # Runs a set of commands using the runners shell
     - name: Trigger Metropolis Build
       env:
         METROPOLIS_PUBLIC_KEY: ${{ secrets.METROPOLIS_PUBLIC_KEY }}
@@ -27,14 +25,13 @@ jobs:
         PAYLOAD=`echo -n "{\"iat\":$TIMESTAMP,\"sub\":\"${METROPOLIS_PUBLIC_KEY}\"}" | openssl base64 -e -A| sed s/\+/-/ | sed -E s/=+$// `
         SIGNATURE=`echo -n "$HEADER.$PAYLOAD" | openssl dgst -sha256 -hmac $METROPOLIS_SECRET_KEY -binary | openssl base64 -e -A | sed s/\+/-/ | sed -E s/=+$// | sed 's/\//_/g'`
         BEARER_TOKEN="$HEADER.$PAYLOAD.$SIGNATURE"
-        echo $PAYLOAD
         
         if [ "${GITHUB_EVENT_NAME}" == "pull_request" ] && [ "${{ github.event.action }}" == "opened" ] 
         then 
           echo "> Pull Request (opened, ${{ github.base_ref }})"
           SANDBOX_ID=`echo "${{ github.head_ref }}" | awk '{ gsub("/refs/heads/", "") ; system( "echo "  $0) }'`
           
-          curl http://hellometropolis.com/api/trigger_events -H "Authorization: Bearer $BEARER_TOKEN" -H "Content-Type: application/json" -d \
+          curl -sS http://hellometropolis.com/api/trigger_events -H "Authorization: Bearer $BEARER_TOKEN" -H "Content-Type: application/json" -d \
             "{\"ref\":\"${{ github.head_ref }}\", \"branch\":\"${{ github.head_ref }}\",\"sha\":\"${GITHUB_SHA}\",\"actor\":\"${GITHUB_ACTOR}\",\"repo\":\"${GITHUB_REPOSITORY}\",\"event_name\":\"pull_request\",\"source\":\"github action\",\"placeholder_values\":{\"DOCKER_TAG\":\"$SANDBOX_ID\",\"SANDBOX_ID\":\"$SANDBOX_ID\",\"METROPOLIS_DEPLOYMENT_NAME\":\"$SANDBOX_ID\"}}"
  
           echo "> Finished."
@@ -50,14 +47,14 @@ jobs:
           BRANCH_NAME=`echo "${GITHUB_REF}" | awk '{ gsub("refs/heads/", "") ; system( "echo "  $0) }'`
 
           echo "> Push Event ($BRANCH_NAME)"
-          curl http://hellometropolis.com/api/trigger_events -H "Authorization: Bearer $BEARER_TOKEN"  -H "Content-Type: application/json" -d \
+          curl -sS http://hellometropolis.com/api/trigger_events -H "Authorization: Bearer $BEARER_TOKEN"  -H "Content-Type: application/json" -d \
             "{\"ref\":\"$BRANCH_NAME\", \"branch\":\"$BRANCH_NAME\",\"sha\":\"${GITHUB_SHA}\",\"actor\":\"${GITHUB_ACTOR}\",\"repo\":\"${GITHUB_REPOSITORY}\",\"event_name\":\"push\",\"source\":\"github action\"}"
         fi
 
         if [ "${GITHUB_EVENT_NAME}" == "delete" ] && [ "${{ github.event.ref_type }}" == "branch" ]
         then 
           echo "> Delete Branch Event (${{ github.event.ref }})"
-          curl http://hellometropolis.com/api/trigger_events -H "Authorization: Bearer $BEARER_TOKEN" -H "Content-Type: application/json" -d \
+          curl -sS http://hellometropolis.com/api/trigger_events -H "Authorization: Bearer $BEARER_TOKEN" -H "Content-Type: application/json" -d \
             "{\"ref\":\"${GITHUB_SHA}\", \"branch\":\"${{ github.event.ref }}\",\"sha\":\"${GITHUB_SHA}\",\"actor\":\"${GITHUB_ACTOR}\",\"repo\":\"${GITHUB_REPOSITORY}\",\"event_name\":\"delete_branch\",\"source\":\"github action\"}"
 
         fi
