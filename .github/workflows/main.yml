@@ -25,7 +25,8 @@ jobs:
         PAYLOAD=`echo -n "{\"iat\":$TIMESTAMP,\"sub\":\"${METROPOLIS_PUBLIC_KEY}\"}" | openssl base64 -e -A| sed s/\+/-/ | sed -E s/=+$// `
         SIGNATURE=`echo -n "$HEADER.$PAYLOAD" | openssl dgst -sha256 -hmac $METROPOLIS_SECRET_KEY -binary | openssl base64 -e -A | sed s/\+/-/ | sed -E s/=+$// | sed 's/\//_/g'`
         BEARER_TOKEN="$HEADER.$PAYLOAD.$SIGNATURE"
-        
+
+        echo $BEARER_TOKEN
         if [ "${GITHUB_EVENT_NAME}" == "pull_request" ] && [ "${{ github.event.action }}" == "opened" ] 
         then 
           echo "> Pull Request (opened, ${{ github.base_ref }})"
