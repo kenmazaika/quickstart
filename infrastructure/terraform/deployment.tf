@@ -244,10 +244,12 @@ resource "metropolis_composition" "primary" {
   }
 
   event_link {
-    repo           = var.github_repo
-    event_name     = "pull_request"
-    branch         = "*"
-    trigger_action = "build"
+    repo                    = var.github_repo
+    event_name              = "pull_request"
+    branch                  = "*"
+    trigger_action          = "build"
+    run_notification_engine = true
+    spawn_sync              = true
   }
 
 }

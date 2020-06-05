@@ -14,10 +14,3 @@ Once setup, pull requests will automatically provision sandbox environments for 
 state rm google_sql_user.users
 terraform destroy
 ```
-
-### Bugs
-
-* secrets need to match: metropolis-gcp-service-account
-* rake_database - container name, need to match the container name built - placeholders apply to this field too
-* setup CI deployments
-* instructions in README
