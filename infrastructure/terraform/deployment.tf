@@ -243,6 +243,13 @@ resource "metropolis_composition" "primary" {
     id = metropolis_component.dns.id
   }
 
+  event_link {
+    repo           = var.github_repo
+    event_name     = "pull_request"
+    branch         = "*"
+    trigger_action = "build"
+  }
+
 }
 
 ###############################################################################
@@ -276,12 +283,12 @@ resource "metropolis_deployment" "master" {
 
   placeholder {
     name  = "METROPOLIS_REPO"
-    value = "kenmazaika/metropolis"
+    value = var.github_repo
   }
 
   event_link {
-    repo           = "kenmazaika/metropolis"
-    event_name     = "pull_request"
+    repo           = var.github_repo
+    event_name     = "push"
     branch         = "master"
     trigger_action = "upgrade"
   }
