@@ -139,7 +139,7 @@ resource "metropolis_component" "mount_secrets" {
 
 resource "metropolis_component" "rake_database" {
   name              = "rake-database"
-  container_name    = "${var.docker_repo_backend}:stg-xyi"
+  container_name    = "${var.docker_repo_backend}:$_METROPOLIS_PLACEHOLDER.DOCKER_TAG"
   placeholders      = [ "SANDBOX_ID" ]
   workspace_id      = metropolis_workspace.primary.id
 
@@ -185,15 +185,15 @@ resource "metropolis_component" "dns" {
 
   on_create = [
     "cd ./infrastructure/shell/dns-records", 
-    "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
+    "gcloud secrets versions access latest --secret metropolis-quickstart-gcp-service-account > gcp-service-account.json", 
     "terraform init", 
     "terraform apply -var 'domain=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID.${var.domain_name}' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve",
-    "echo 'METRO_INFO: {\"url\": \"$_METROPOLIS_PLACEHOLDER.SANDBOX_ID. ${var.domain_name}\"}'"
+    "echo 'METRO_INFO: {\"url\": \"$_METROPOLIS_PLACEHOLDER.SANDBOX_ID.${var.domain_name}\"}'"
   ]
 
   on_destroy = [
     "cd ./infrastructure/shell/dns-records", 
-    "gcloud secrets versions access latest --secret metropolis-gcp-service-account > gcp-service-account.json", 
+    "gcloud secrets versions access latest --secret metropolis-quickstart-gcp-service-account > gcp-service-account.json", 
     "terraform init", 
     "terraform destroy -var 'domain=$_METROPOLIS_PLACEHOLDER.SANDBOX_ID.${var.domain_name}' -var 'ip_address=$_METROPOLIS_ASSET.INGRESS_IP_ADDRESS' --auto-approve"
   ]
