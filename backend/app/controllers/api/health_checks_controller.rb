@@ -3,7 +3,7 @@ class Api::HealthChecksController < ApplicationController
         resp = {
           time: Time.now.to_s(:db),
           env: Rails.env.to_s,
-          message: "Alpha pass thru x 3"
+          message: "Metropolis Quickstart API"
         }
         render json: resp
       end
