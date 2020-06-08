@@ -25,9 +25,8 @@ spec:
           serviceName: frontend-$DEPLOYMENT_KEY-metropolis-quickstart-frontend
           servicePort: 80" > infrastructure/terraform/ingress.yaml
 
-
-echo "> Outputing"
-cat infrastructure/terraform/ingress.yaml
+# echo "> Outputing"
+# cat infrastructure/terraform/ingress.yaml
 
 echo "> Applying"
 kubectl apply -f infrastructure/terraform/ingress.yaml

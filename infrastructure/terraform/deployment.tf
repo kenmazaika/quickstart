@@ -251,6 +251,12 @@ resource "metropolis_composition" "primary" {
     spawn_sync              = true
   }
 
+  depends_on = [
+    metropolis_asset.metropolis_asset_database_name,
+    metropolis_asset.metropolis_asset_database_instance_name,
+    metropolis_asset.metropolis_asset_database_private_ip,
+    metropolis_asset.metropolis_asset_ingress_ip
+  ]
 }
 
 ###############################################################################
