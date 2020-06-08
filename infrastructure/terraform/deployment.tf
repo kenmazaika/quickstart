@@ -50,8 +50,7 @@ resource "metropolis_component" "clone_source" {
 
   component_did_mount = [
     "curl https://raw.githubusercontent.com/kenmazaika/metropolis-utils/master/scripts/github/clone.sh | DEPLOY_KEY=\"`gcloud secrets versions access latest --secret=github_deploy_key`\" GITHUB_URL=\"${var.github_clone_url}\" REF=\"$_METROPOLIS_PLACEHOLDER.METROPOLIS_REF\" sh",
-    ". /metropolis-utils/.clone",
-    "ls"
+    ". /metropolis-utils/.clone"
   ]
   
 }
