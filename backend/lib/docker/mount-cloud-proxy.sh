@@ -25,9 +25,9 @@ echo "production:
   password: ${DB_PASSWORD}" > "$DIR/database.yml"
 
 
-echo "> Built configuration file"
-cat $DIR/database.yml
+# echo "> Built configuration file"
+# cat $DIR/database.yml
 
 echo $METROPOLIS_RAILS_MASTER_KEY > "$DIR/master.key"
 
-echo "> Staging mounted"
+echo "> Mounted environment"
