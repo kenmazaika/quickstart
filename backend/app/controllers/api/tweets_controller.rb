@@ -2,7 +2,7 @@ class Api::TweetsController < ActionController::API
   def index
     tweets = Tweet.all
     # render json: tweets
-    render json: "Yolo Swag x 4"
+    render json: "Yolo Swag x 5"
   end
 
   def create
